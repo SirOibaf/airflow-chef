@@ -30,10 +30,10 @@ depends 'java'
 depends 'hops'
 depends 'hive2'
 
-recipe           "default", "Configures an Airflow Server"
-recipe           "install", "Installs an Airflow Server"
-recipe           "sqoop", "Installs and onfigures Sqoop and the Sqoop metastore service"
-recipe           "purge", "Removes and deletes an installed Airflow Server"
+recipe           "hops_airflow::default", "Configures an Airflow Server"
+recipe           "hops_airflow::install", "Installs an Airflow Server"
+recipe           "hops_airflow::sqoop", "Installs and onfigures Sqoop and the Sqoop metastore service"
+recipe           "hops_airflow::purge", "Removes and deletes an installed Airflow Server"
 
 attribute "airflow/dir",
           :description => "Installation directory for the airflow binaries/config files",
