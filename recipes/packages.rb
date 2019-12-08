@@ -78,73 +78,25 @@ bash "remove_airflow_env" do
   only_if "test -d #{node['conda']['base_dir']}/envs/airflow", :user => node['conda']['user']  
 end
 
-## Create Aiflow anaconda environment.
-bash "create_airflow_env" do
-  umask "022"
-  user node['conda']['user']
-  group node['conda']['group']
-  environment ({'HOME' => "/home/#{node['conda']['user']}"})
-  cwd "/home/#{node['conda']['user']}"
+remote_file "/tmp/chef-solo/airflow.tar.gz" do
+  source "http://snurran.sics.se/hops/base_envs/airflow.tar.gz" 
+  owner 'root'
+  group 'root'
+  mode '0755'
+  action :create
+end
+
+# TODO(Fabio): call conda-unpack
+bash "extrac_base_envs" do 
+  user "root"
+  group "root" 
   code <<-EOF
-    #{node['conda']['base_dir']}/bin/conda create -q -y -n airflow python=3.6
+    set -e
+    mkdir /srv/hops/anaconda/envs/airflow
+    mv /tmp/chef-solo/airflow.tar.gz /srv/hops/anaconda/envs/airflow
+    cd /srv/hops/anaconda/envs/airflow
+    tar xf airflow.tar.gz
+    rm airflow.tar.gz
+    chown -R anaconda:anaconda /srv/hops/anaconda/envs/airflow
   EOF
-  not_if "test -d #{node['conda']['base_dir']}/envs/airflow", :user => node['conda']['user']
-end
-
-# Install Airflow
-bash 'install_airflow' do
-  umask "022"
-  user node['conda']['user']
-  group node['conda']['group']
-  environment ({'SLUGIFY_USES_TEXT_UNIDECODE' => 'yes',
-                'AIRFLOW_HOME' => node['airflow']['base_dir'],
-                'HOME' => "/home/#{node['conda']['user']}"})
-  cwd "/home/#{node['conda']['user']}"
-  code <<-EOF
-      set -e
-      #{node['conda']['base_dir']}/envs/airflow/bin/pip install --no-cache-dir apache-airflow==#{node['airflow']['version']}
-    EOF
-end
-
-
-for operator in node['airflow']['operators'].split(",")
-  bash 'install_airflow_' + operator do
-    umask "022"
-    user node['conda']['user']
-    group node['conda']['group']
-    environment ({'SLUGIFY_USES_TEXT_UNIDECODE' => 'yes',
-                  'AIRFLOW_HOME' => node['airflow']['base_dir']})
-    code <<-EOF
-      set -e
-      #{node['conda']['base_dir']}/envs/airflow/bin/pip install --no-cache-dir apache-airflow["#{operator}"]==#{node['airflow']['version']}
-    EOF
-  end
-end
-
-# Install Airflow packages
-node['airflow']['packages'].each do |_key, value|
-  value.each do |val|
-    package_to_install = ''
-    version_to_install = ''
-    val.each do |k, v|
-      if k.to_s == 'name'
-        package_to_install = v
-      else
-        version_to_install = v
-      end
-    end
-    bash 'install_python__' + package_to_install do
-      umask "022"
-      user node['conda']['user']
-      group node['conda']['group']
-      code <<-EOF
-        set -e
-        #{node['conda']['base_dir']}/envs/airflow/bin/pip install --no-cache-dir \'#{package_to_install}#{version_to_install}\'
-      EOF
-    end
-    #python_package package_to_install.to_s do
-    #  action :install
-    #  version version_to_install.to_s
-    #end
-  end
 end
