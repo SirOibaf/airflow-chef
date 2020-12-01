@@ -23,7 +23,6 @@ supports         'centos', '>= 7.0'
 chef_version     '>=12.1'
 
 depends 'apt', '~> 7.0'
-depends 'poise-python', '~> 1.7'
 depends 'java', '~> 7.0.0'
 depends 'kagent'
 depends 'hops'
